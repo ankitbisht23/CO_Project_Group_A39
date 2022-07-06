@@ -104,7 +104,7 @@ for line in Inputcode:
         elif line[0] in [ "div", "not", "cmp"]:
             if len(line)==3:
                 if line[1] in dict_register and line[2] in dict_register:
-                    if(line[1]!='FLAGS'):
+                    if(line[1]!='FLAGS' and line[2]!='FLAGS'):
                         lc=dict_instruction[line[0]]+"00000"+dict_register[line[1]]+dict_register[line[2]]
                         output.append(lc)
                     else: errorlist.append(f"Error in line {line_no}: Illegal use of FLAGS registers")
