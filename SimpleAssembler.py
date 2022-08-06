@@ -3,11 +3,64 @@ def binaryconvert(a):
     b=str(bin(int(a)))
     no='0'*(10-len(b))+b[2:]
     return no
-
+def DecimalTobin(n):
+    num=''
+    if '.' in n:
+        w,d=n.split('.')
+        d='0.'+d
+        d=float(d)
+    else:
+        w=n
+        d=0
+    w=int(w)
+    if(w==0):
+        num='0'
+    while w!=0:
+        r=w%2
+        j=str(r)
+        w=w//2
+        num+=j
+    num=num[::-1]
+    if '.' not in n:
+        return num
+    flno='.'
+    for j in range(5):
+        r=d*2
+        x=int(r)
+        if x>1:
+            break
+        j=str(x)
+        flno+=j
+        d=r-x
+    num+=flno
+    return num
+def floatTobinaryconvert(a):
+    no=DecimalTobin(a)
+    pow=0
+    if '.' in no:
+        pow=no.index('.')-1
+    else:
+        pow=len(no)-1
+    pow=str(pow)
+    pow=DecimalTobin(pow)
+    while(len(pow)!=3):
+        pow='0'+pow
+    no=no.replace('.','',1)
+    mentisa=''
+    if(len(no)<6):
+        mentisa=no[1:]
+        while(len(mentisa)!=5):
+            mentisa+='0'
+    else:
+        mentisa=no[1:6]
+    num=pow+mentisa
+    return num
+    
 dict_instruction={ 
     'sub': '10001','add': '10000','mov': ['10010', '10011'],    'ld' : '10100','st' : '10101','mul': '10110',
     'div': '10111','rs' : '11000','ls' : '11001','xor': '11010','or' : '11011','and': '11100','not': '11101',
-    'cmp': '11110','jmp': '11111','je' : '01111','jlt': '01100','jgt': '01101','hlt': '01010' 
+    'cmp': '11110','jmp': '11111','je' : '01111','jlt': '01100','jgt': '01101','hlt': '01010' ,'movf':'00010',
+    'addf':'00000','subf':'00001'
     }
 dict_register = {'R0': '000','R1': '001','R2': '010','R3': '011','R4': '100',
             'R5': '101','R6': '110','FLAGS': '111'}
@@ -68,7 +121,9 @@ for line in Inputcode:
         if line[0][:-1] in lables:
             line.pop(0)
             
-        if not line: continue
+        if not line: 
+            errorlist.append(f"Error in line {line_no}: Wrong syntax")
+            continue
         if line[0][-1]==':': errorlist.append(f"Error in line {line_no}: Multiple lables present")
         elif line[0] in ["add", "sub", "mul", "xor", "or", "and"] :
             if len(line)==4:
@@ -163,6 +218,39 @@ for line in Inputcode:
                 else: errorlist.append(f"Error in line {line_no}: Use of wrong register name")   
             else: errorlist.append(f"Error in line {line_no}: Wrong syntax")
 
+        elif line[0]=='movf':
+            if len(line)==3:
+                if line[1] in dict_register:
+                    if line[1]!="FLAGS":
+                        if line[2][0]=='$':
+                            if '.' in line[2][1:]:
+                                try:
+                                    no=float(line[2][1:])
+                                    if no>252 or no<1:
+                                            errorlist.append(f"Error in line {line_no}: Illegal Immediate value")
+                                    else:     
+                                        lc=dict_instruction[line[0]]+""+dict_register[line[1]]+""+floatTobinaryconvert(line[2][1:])
+                                        output.append(lc)           
+                                except:
+                                    errorlist.append(f"Error in line {line_no}: Illegal Immediate value")
+                            else: errorlist.append(f"Error in line {line_no}: Illegal Immediate value")
+                        else: errorlist.append(f"Error in line {line_no}: Wrong syntax")
+                    else: errorlist.append(f"Error in line {line_no}: Illegal use of FLAGS registers")
+                else: errorlist.append(f"Error in line {line_no}: Use of wrong register name")   
+            else: errorlist.append(f"Error in line {line_no}: Wrong syntax")
+
+        elif line[0] in ["addf", "subf"] :
+            if len(line)==4:
+                if line[1] in dict_register and line[2] in dict_register and line[3] in dict_register:
+                    if(line[1]!='FLAGS' and line[2]!='FLAGS' and line[3]!='FLAGS'):
+                        lc=dict_instruction[line[0]]+"00"+dict_register[line[1]]+""+dict_register[line[2]]+""+dict_register[line[3]]
+                        output.append(lc)
+                    else: errorlist.append(f"Error in line {line_no}: Illegal use of FLAGS registers")
+                else:
+                    errorlist.append(f"Error in line {line_no}: Use of wrong register name")
+            else: errorlist.append(f"Error in line {line_no}: Wrong syntax")
+
+
         elif line[0]=="hlt":
             if len(line)==1:
                 hlt_no+=1
@@ -183,8 +271,8 @@ if hlt_no>1:
     errorlist.append(f"Error in line {hlt_line[1]}: multiple hlt present")
     
 if errorlist:   
-	for i in errorlist:
-	    	print(i)
+    for i in errorlist:
+            print(i)
 else:
-	for l in output:
-    		print(l)
+    for l in output:
+            print(l)
